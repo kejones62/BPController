@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPController</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0D0D1A;
+    color: #E6E1E5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 24px 20px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .header h1 { font-size: 22px; color: #BB86FC; font-weight: 700; }
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #555;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .status-dot.connected { background: #4CAF50; }
+  .status-label { font-size: 13px; color: #9E9E9E; }
+  hr { border: none; border-top: 1px solid rgba(102,80,164,0.3); margin-bottom: 24px; }
+
+  /* Cards */
+  .card {
+    background: #1A1A2E;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #9E9E9E;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  /* Timer */
+  .timer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .timer-label { font-size: 14px; color: #9E9E9E; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(158,158,158,0.3);
+    background: #1A1A2E;
+    color: #9E9E9E;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip.active {
+    background: #FFB74D;
+    border-color: #FFB74D;
+    color: #000;
+    font-weight: 700;
+  }
+  .countdown-row {
+    margin-top: 10px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+  }
+  .countdown-row.visible { display: flex; }
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,183,77,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #FFB74D;
+    border-radius: 3px;
+    transition: width 1s linear;
+  }
+  .countdown-text { font-size: 16px; font-weight: 700; color: #FFB74D; min-width: 40px; }
+
+  /* Stop button */
+  .stop-btn {
+    width: 100%;
+    height: 56px;
+    background: #CF6679;
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: opacity 0.15s;
+  }
+  .stop-btn:active { opacity: 0.8; }
+
+  /* Slider */
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .slider-level { font-size: 14px; font-weight: 600; color: #BB86FC; }
+  .slider-level.off { color: #9E9E9E; }
+  .slider-max { font-size: 12px; color: #9E9E9E; }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(187,134,252,0.2);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #BB86FC;
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #BB86FC;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Pattern grid */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .pattern-btn {
+    aspect-ratio: 1.4;
+    background: #1A1A2E;
+    border: 1px solid rgba(1,135,134,0.3);
+    border-radius: 10px;
+    color: #03DAC6;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: all 0.15s;
+  }
+  .pattern-btn .pname { font-size: 9px; color: #9E9E9E; font-weight: 400; }
+  .pattern-btn.active {
+    background: linear-gradient(135deg, #03DAC6, #018786);
+    border-color: #03DAC6;
+    color: #000;
+  }
+  .pattern-btn.active .pname { color: rgba(0,0,0,0.7); }
+  .pattern-btn:active { opacity: 0.8; }
+
+  /* Connection notice */
+  .notice {
+    text-align: center;
+    color: #9E9E9E;
+    font-size: 14px;
+    margin-top: 32px;
+    line-height: 1.6;
+  }
+  .notice span { color: #BB86FC; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>BPController</h1>
+  <div>
+    <span class="status-dot" id="statusDot"></span>
+    <span class="status-label" id="statusLabel">Connecting…</span>
+  </div>
+</div>
+<hr>
+
+<!-- Timer -->
+<div class="card">
+  <div class="timer-row">
+    <span class="timer-label">⏱ Auto-stop after</span>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div class="countdown-row" id="countdownRow">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="countdown-text" id="countdownText"></span>
+  </div>
+</div>
+
+<!-- Stop -->
+<button class="stop-btn" onclick="sendStop()">■  STOP</button>
+
+<!-- Slide -->
+<div class="card">
+  <div class="card-title">Vibration (Slide)</div>
+  <div class="slider-header">
+    <span class="slider-level off" id="slideLabel">Off</span>
+    <span class="slider-max">/ 19</span>
+  </div>
+  <input type="range" id="slideSlider" min="0" max="19" value="0" oninput="onSlide(this.value)">
+</div>
+
+<!-- Patterns -->
+<div class="card">
+  <div class="card-title">Preset Patterns</div>
+  <div class="pattern-grid" id="patternGrid"></div>
+</div>
+
+<div class="notice">
+  Commands are sent to the Android app.<br>
+  Make sure <span>BPController</span> is open and connected.
+</div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2vsHjUR229JpcroR4GCtWmsBeAInVI8E",
+    authDomain: "bpcontroller-9f361.firebaseapp.com",
+    projectId: "bpcontroller-9f361",
+    storageBucket: "bpcontroller-9f361.firebasestorage.app",
+    messagingSenderId: "500763411356",
+    appId: "1:500763411356:web:2956b9849eb919e9963e59"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const cmdDoc = doc(db, 'commands', 'current');
+
+  // ── Status ────────────────────────────────────────────────────────────────
+  const statusDot   = document.getElementById('statusDot');
+  const statusLabel = document.getElementById('statusLabel');
+
+  function setConnected(ok) {
+    statusDot.className   = 'status-dot' + (ok ? ' connected' : '');
+    statusLabel.textContent = ok ? 'Firebase connected' : 'Disconnected';
+  }
+
+  // Listen to confirm Firebase is reachable and reflect remote state
+  onSnapshot(cmdDoc, snap => {
+    setConnected(true);
+    if (!snap.exists()) return;
+    const d = snap.data();
+    // Reflect remote state in UI (so web shows what Android is doing)
+    if (d.type === 'slide') {
+      document.getElementById('slideSlider').value = d.value;
+      updateSlideLabel(d.value);
+      setActivePattern(0);
+    } else if (d.type === 'pattern') {
+      document.getElementById('slideSlider').value = 0;
+      updateSlideLabel(0);
+      setActivePattern(d.value);
+    } else if (d.type === 'stop') {
+      document.getElementById('slideSlider').value = 0;
+      updateSlideLabel(0);
+      setActivePattern(0);
+    }
+  }, () => setConnected(false));
+
+  // ── Write command ─────────────────────────────────────────────────────────
+  async function sendCommand(type, value) {
+    await setDoc(cmdDoc, { type, value, timestamp: serverTimestamp() });
+  }
+
+  // ── Timer ─────────────────────────────────────────────────────────────────
+  const durations = [1, 2, 5, 10, 15, 20, 30];
+  let selectedMins   = 1;
+  let timerInterval  = null;
+  let timerRemaining = 0;
+  let timerTotal     = 0;
+
+  const chipsEl       = document.getElementById('chips');
+  const countdownRow  = document.getElementById('countdownRow');
+  const progressFill  = document.getElementById('progressFill');
+  const countdownText = document.getElementById('countdownText');
+
+  durations.forEach(m => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (m === 1 ? ' active' : '');
+    chip.textContent = m === 1 ? '1m' : `${m}m`;
+    chip.onclick = () => {
+      selectedMins = m;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    };
+    chipsEl.appendChild(chip);
+  });
+
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerTotal     = selectedMins * 60;
+    timerRemaining = timerTotal;
+    countdownRow.classList.add('visible');
+    updateCountdownUI();
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        countdownRow.classList.remove('visible');
+        sendCommand('stop', 0);
+        document.getElementById('slideSlider').value = 0;
+        updateSlideLabel(0);
+        setActivePattern(0);
+      } else {
+        updateCountdownUI();
+      }
+    }, 1000);
+  }
+
+  function cancelTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    countdownRow.classList.remove('visible');
+  }
+
+  function updateCountdownUI() {
+    const m = Math.floor(timerRemaining / 60);
+    const s = timerRemaining % 60;
+    countdownText.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    progressFill.style.width = `${(timerRemaining / timerTotal) * 100}%`;
+  }
+
+  // ── Slide ─────────────────────────────────────────────────────────────────
+  function updateSlideLabel(v) {
+    const el = document.getElementById('slideLabel');
+    el.textContent = v == 0 ? 'Off' : `Level ${v}`;
+    el.className = 'slider-level' + (v == 0 ? ' off' : '');
+  }
+
+  window.onSlide = function(v) {
+    v = parseInt(v);
+    updateSlideLabel(v);
+    setActivePattern(0);
+    if (v === 0) {
+      sendCommand('stop', 0);
+      cancelTimer();
+    } else {
+      sendCommand('slide', v);
+      startTimer();
+    }
+  };
+
+  // ── Stop ──────────────────────────────────────────────────────────────────
+  window.sendStop = function() {
+    sendCommand('stop', 0);
+    cancelTimer();
+    document.getElementById('slideSlider').value = 0;
+    updateSlideLabel(0);
+    setActivePattern(0);
+  };
+
+  // ── Patterns ──────────────────────────────────────────────────────────────
+  const patternNames = ['Wave','Pulse','Surge','Rhythm','Storm','Breath','Beat','Ripple','Climb','Cascade'];
+  const gridEl = document.getElementById('patternGrid');
+  let activePatternId = 0;
+
+  patternNames.forEach((name, i) => {
+    const p = i + 1;
+    const btn = document.createElement('button');
+    btn.className = 'pattern-btn';
+    btn.id = `p${p}`;
+    btn.innerHTML = `${p}<span class="pname">${name}</span>`;
+    btn.onclick = () => {
+      setActivePattern(p);
+      sendCommand('pattern', p);
+      startTimer();
+    };
+    gridEl.appendChild(btn);
+  });
+
+  function setActivePattern(p) {
+    activePatternId = p;
+    document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+    if (p > 0) document.getElementById(`p${p}`)?.classList.add('active');
+  }
+</script>
+</body>
+</html>
